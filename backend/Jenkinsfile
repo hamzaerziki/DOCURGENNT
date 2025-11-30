@@ -1,0 +1,114 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'your-registry.com'
+        IMAGE_NAME = 'docurgent-backend'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    sh '''
+                        python3 -m venv venv
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r backend/requirements.txt
+                    '''
+                }
+            }
+        }
+        
+        stage('Lint & Format Check') {
+            steps {
+                script {
+                    sh '''
+                        . venv/bin/activate
+                        cd backend
+                        flake8 app --max-line-length=120 --exclude=__pycache__,venv,alembic || true
+                        black --check app || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                script {
+                    sh '''
+                        . venv/bin/activate
+                        cd backend
+                        pytest tests/ --cov=app --cov-report=xml --cov-report=html || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh '''
+                        cd backend
+                        docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                    '''
+                }
+            }
+        }
+        
+        stage('Push to Registry') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh '''
+                            echo $DOCKER_PASS | docker login ${DOCKER_REGISTRY} -u $DOCKER_USER --password-stdin
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Update K8s Manifests') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    sh '''
+                        sed -i "s|image:.*|image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|g" backend/k8s/deployment.yaml
+                        git config user.email "jenkins@docurgent.com"
+                        git config user.name "Jenkins CI"
+                        git add backend/k8s/deployment.yaml
+                        git commit -m "Update image tag to ${IMAGE_TAG}" || true
+                        git push origin main || true
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

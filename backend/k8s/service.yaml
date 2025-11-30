@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: docurgent-backend-service
+  namespace: docurgent
+  labels:
+    app: docurgent-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: docurgent-backend
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  sessionAffinity: None

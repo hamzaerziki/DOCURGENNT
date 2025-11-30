@@ -28,57 +28,12 @@ interface RequestEvent {
   type: 'request';
 }
 
-const mockFlights: FlightEvent[] = [
-  {
-    id: '1',
-    travelerName: 'Ahmed Benali',
-    departureCity: 'Paris',
-    destinationCity: 'Casablanca',
-    date: new Date(2024, 0, 15),
-    price: 25,
-    spotsAvailable: 2,
-    type: 'flight'
-  },
-  {
-    id: '2',
-    travelerName: 'Leila Mansouri',
-    departureCity: 'Lyon',
-    destinationCity: 'Tunis',
-    date: new Date(2024, 0, 18),
-    price: 30,
-    spotsAvailable: 1,
-    type: 'flight'
-  },
-  {
-    id: '3',
-    travelerName: 'Karim Bouchama',
-    departureCity: 'Marseille',
-    destinationCity: 'Algiers',
-    date: new Date(2024, 0, 20),
-    price: 20,
-    spotsAvailable: 3,
-    type: 'flight'
-  }
-];
+// Mock data removed - will be replaced with real API calls
+const mockFlights: FlightEvent[] = [];
 
-const mockRequests: RequestEvent[] = [
-  {
-    id: '1',
-    senderName: 'Marie Dubois',
-    destinationCity: 'Casablanca',
-    requestedDate: new Date(2024, 0, 15),
-    documentType: 'Passport copy',
-    type: 'request'
-  },
-  {
-    id: '2',
-    senderName: 'Pierre Martin',
-    destinationCity: 'Tunis',
-    requestedDate: new Date(2024, 0, 18),
-    documentType: 'Birth certificate',
-    type: 'request'
-  }
-];
+// Mock data removed - will be replaced with real API calls
+const mockRequests: RequestEvent[] = [];
+
 
 export const Schedule = () => {
   const { t } = useLanguage();
@@ -114,7 +69,7 @@ export const Schedule = () => {
               </h1>
               <p className="text-muted-foreground">View flights and delivery requests by date</p>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Select value={view} onValueChange={(value: 'month' | 'week' | 'list') => setView(value)}>
                 <SelectTrigger className="w-32">

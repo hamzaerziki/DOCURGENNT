@@ -22,7 +22,7 @@ const TEST_CREDENTIALS = {
     userType: 'sender' as const
   },
   traveler: {
-    email: 'traveler@test.com', 
+    email: 'traveler@test.com',
     password: 'test123',
     userType: 'traveler' as const
   }
@@ -57,33 +57,85 @@ export const AuthModal = ({ isOpen, onClose, onLoginSuccess, initialMode = 'logi
     setIsLoading(true);
     setError(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     try {
       if (mode === 'login') {
-        const senderMatch = formData.email === TEST_CREDENTIALS.sender.email && 
-                            formData.password === TEST_CREDENTIALS.sender.password;
-        const travelerMatch = formData.email === TEST_CREDENTIALS.traveler.email && 
-                             formData.password === TEST_CREDENTIALS.traveler.password;
-        
-        if (senderMatch) {
-          onLoginSuccess?.('sender');
-          onClose();
-        } else if (travelerMatch) {
-          onLoginSuccess?.('traveler');
-          onClose();
-        } else {
-          setError('Invalid email or password. Please check your credentials and try again.');
+        // Call real login API
+        const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            identifier: formData.email || formData.phone,
+            password: formData.password,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Login failed');
         }
+
+        const data = await response.json();
+
+        // Store tokens
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+
+        // Determine user type from token or response
+        // For now, use the selected userType
+        onLoginSuccess?.(userType);
+        onClose();
       } else {
-        // Handle registration (demo)
-        console.log('Registration:', { mode, userType, formData });
+        // Call real registration API
+        const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phone: formData.phone,
+            password: formData.password,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email || undefined,
+            user_type: userType,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Registration failed');
+        }
+
+        const data = await response.json();
+        console.log('Registration successful:', data);
+
+        // Auto-login after registration
+        const loginResponse = await fetch('http://localhost:8000/api/v1/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            identifier: formData.phone,
+            password: formData.password,
+          }),
+        });
+
+        if (loginResponse.ok) {
+          const loginData = await loginResponse.json();
+          localStorage.setItem('access_token', loginData.access_token);
+          localStorage.setItem('refresh_token', loginData.refresh_token);
+        }
+
         onLoginSuccess?.(userType);
         onClose();
       }
     } catch (e) {
-      setError('An unexpected error occurred. Please try again later.');
+      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again later.';
+      setError(errorMessage);
+      console.error('Authentication error:', e);
     } finally {
       setIsLoading(false);
     }
@@ -262,7 +314,7 @@ export const AuthModal = ({ isOpen, onClose, onLoginSuccess, initialMode = 'logi
               variant="link"
               onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
             >
-              {mode === 'login' 
+              {mode === 'login'
                 ? t('auth.noAccount')
                 : t('auth.hasAccount')
               }

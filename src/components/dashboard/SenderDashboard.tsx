@@ -15,66 +15,12 @@ import { RewardsSystem } from '@/components/loyalty/RewardsSystem';
 import { NotificationSystem } from '@/components/notifications/NotificationSystem';
 import documentWorkflowService, { DocumentRequest, DeliveryStep } from '@/services/documentWorkflowService';
 
-// Mock data for travelers
-const mockTravelers: Traveler[] = [
-  {
-    id: '1',
-    firstName: 'Ahmed',
-    lastName: 'Benali',
-    verification: 'gold',
-    rating: 4.8,
-    reviewCount: 24,
-    departureCity: 'Paris',
-    destinationCity: 'Casablanca',
-    departureDate: '2024-01-15',
-    airline: 'Royal Air Maroc',
-    flightNumber: 'AT754',
-    spotsAvailable: 2,
-    priceRange: { min: 15, max: 25 }
-  },
-  {
-    id: '2',
-    firstName: 'Leila',
-    lastName: 'Mansouri',
-    verification: 'silver',
-    rating: 4.9,
-    reviewCount: 31,
-    departureCity: 'Lyon',
-    destinationCity: 'Tunis',
-    departureDate: '2024-01-18',
-    airline: 'Tunisair',
-    flightNumber: 'TU721',
-    spotsAvailable: 1,
-    priceRange: { min: 20, max: 30 }
-  },
-  {
-    id: '3',
-    firstName: 'Karim',
-    lastName: 'Bouchama',
-    verification: 'bronze',
-    rating: 4.6,
-    reviewCount: 12,
-    departureCity: 'Marseille',
-    destinationCity: 'Algiers',
-    departureDate: '2024-01-20',
-    spotsAvailable: 3,
-    priceRange: { min: 10, max: 20 }
-  }
-];
+// Mock data removed - will be replaced with real API calls
+const mockTravelers: Traveler[] = [];
 
-// Mock data for sender's documents
-const mockDocuments: DocumentRequest[] = [
-  documentWorkflowService.createDocumentRequest(
-    { name: 'You', phone: '+33 6 12 34 56 78', sourceAddress: '123 Rue de Paris, 75001 Paris' },
-    { name: 'Ahmed Benali', phone: '+212 6 87 65 43 21', destinationAddress: '456 Avenue Mohammed V, Casablanca' },
-    { type: 'Passport', description: 'French passport for visa application' }
-  ),
-  documentWorkflowService.createDocumentRequest(
-    { name: 'You', phone: '+33 6 98 76 54 32', sourceAddress: '789 Boulevard de Lyon, 69002 Lyon' },
-    { name: 'Fatima El Mansouri', phone: '+216 5 43 21 09 87', destinationAddress: '789 Rue de Tunis, Tunis' },
-    { type: 'Birth Certificate', description: 'Birth certificate for university enrollment' }
-  )
-];
+// Mock data removed - will be replaced with real API calls  
+const mockDocuments: DocumentRequest[] = [];
+
 
 const countryToCities = {
   'Morocco': ['Casablanca', 'Rabat', 'Marrakech', 'Fes', 'Agadir', 'Tangier', 'Oujda'],
@@ -118,14 +64,14 @@ export const SenderDashboard = () => {
     // Filter travelers based on country and city
     const filtered = mockTravelers.filter(traveler => {
       if (!selectedCountry && !selectedCity) return true;
-      
+
       const matchesCountry = !selectedCountry ||
         (selectedCountry === 'Morocco' && (traveler.destinationCity.includes('Casablanca') || traveler.destinationCity.includes('Rabat') || traveler.destinationCity.includes('Marrakech'))) ||
         (selectedCountry === 'Tunisia' && (traveler.destinationCity.includes('Tunis') || traveler.destinationCity.includes('Sfax'))) ||
         (selectedCountry === 'Algeria' && (traveler.destinationCity.includes('Algiers') || traveler.destinationCity.includes('Oran')));
-      
+
       const matchesCity = !selectedCity || traveler.destinationCity.toLowerCase().includes(selectedCity.toLowerCase());
-      
+
       return matchesCountry && matchesCity;
     });
     setTravelers(filtered);
@@ -135,7 +81,7 @@ export const SenderDashboard = () => {
     setAppliedFilters(filters);
     // Apply advanced filters to travelers
     let filtered = [...mockTravelers];
-    
+
     // Apply basic country/city filters first
     if (selectedCountry || selectedCity) {
       filtered = filtered.filter(traveler => {
@@ -143,7 +89,7 @@ export const SenderDashboard = () => {
           (selectedCountry === 'Morocco' && (traveler.destinationCity.includes('Casablanca') || traveler.destinationCity.includes('Rabat') || traveler.destinationCity.includes('Marrakech'))) ||
           (selectedCountry === 'Tunisia' && (traveler.destinationCity.includes('Tunis') || traveler.destinationCity.includes('Sfax'))) ||
           (selectedCountry === 'Algeria' && (traveler.destinationCity.includes('Algiers') || traveler.destinationCity.includes('Oran')));
-        
+
         const matchesCity = !selectedCity || traveler.destinationCity.toLowerCase().includes(selectedCity.toLowerCase());
         return matchesCountry && matchesCity;
       });
@@ -170,7 +116,7 @@ export const SenderDashboard = () => {
       filtered = filtered.filter(traveler => {
         if (filters.verificationStatus === 'verified') {
           // Legacy "verified" includes gold & silver levels
-          return ['verified', 'gold', 'silver'].includes( traveler.verification as any);
+          return ['verified', 'gold', 'silver'].includes(traveler.verification as any);
         }
         return traveler.verification === filters.verificationStatus;
       });
@@ -221,8 +167,8 @@ export const SenderDashboard = () => {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <SendDocumentFlow 
-                    onClose={() => setSendDocumentOpen(false)} 
+                  <SendDocumentFlow
+                    onClose={() => setSendDocumentOpen(false)}
                     isQuickSend={false}
                     isLoggedIn={true}
                   />
@@ -300,8 +246,8 @@ export const SenderDashboard = () => {
                     <Search className="w-4 h-4 mr-2" />
                     {t('sender.dashboard.search')}
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleScanNearby}
                     className="px-3"
                   >
@@ -333,9 +279,9 @@ export const SenderDashboard = () => {
                           </CardTitle>
                           <Badge variant={
                             document.status === 'completed' ? 'default' :
-                            document.status === 'delivered' ? 'secondary' :
-                            document.status === 'with_traveler' ? 'verified' :
-                            'outline'
+                              document.status === 'delivered' ? 'secondary' :
+                                document.status === 'with_traveler' ? 'verified' :
+                                  'outline'
                           }>
                             {document.status.replace('_', ' ')}
                           </Badge>
@@ -354,19 +300,18 @@ export const SenderDashboard = () => {
                               Provide this code to the traveler for delivery confirmation
                             </p>
                           </div>
-                          
+
                           {/* Delivery Steps */}
                           <div>
                             <h4 className="font-medium mb-2">Delivery Progress</h4>
                             <div className="space-y-2">
                               {getDeliverySteps(document.id).map((step) => (
-                                <div 
-                                  key={step.id} 
-                                  className={`flex items-center p-3 rounded-lg border ${
-                                    step.completed 
-                                      ? 'bg-green-50 border-green-200' 
+                                <div
+                                  key={step.id}
+                                  className={`flex items-center p-3 rounded-lg border ${step.completed
+                                      ? 'bg-green-50 border-green-200'
                                       : 'bg-muted/50 border-muted'
-                                  }`}
+                                    }`}
                                 >
                                   <div className="mr-3">
                                     {step.completed ? (
@@ -378,9 +323,8 @@ export const SenderDashboard = () => {
                                     )}
                                   </div>
                                   <div className="flex-1">
-                                    <p className={`font-medium ${
-                                      step.completed ? 'text-green-800' : 'text-muted-foreground'
-                                    }`}>
+                                    <p className={`font-medium ${step.completed ? 'text-green-800' : 'text-muted-foreground'
+                                      }`}>
                                       {step.name}
                                     </p>
                                     {step.completed && step.completedAt && (
@@ -396,7 +340,7 @@ export const SenderDashboard = () => {
                               ))}
                             </div>
                           </div>
-                          
+
                           {/* Completion Status */}
                           {document.status === 'completed' && (
                             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
@@ -406,7 +350,7 @@ export const SenderDashboard = () => {
                               </div>
                               {document.completedAt && (
                                 <p className="text-sm text-green-700 mt-1">
-                  Completed on {new Date(document.completedAt).toLocaleString()}
+                                  Completed on {new Date(document.completedAt).toLocaleString()}
                                 </p>
                               )}
                             </div>

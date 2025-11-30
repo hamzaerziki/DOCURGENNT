@@ -1,0 +1,153 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: docurgent_postgres
+    environment:
+      POSTGRES_USER: docurgent
+      POSTGRES_PASSWORD: docurgent123
+      POSTGRES_DB: docurgent
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U docurgent" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - docurgent_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: docurgent_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - docurgent_network
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: docurgent_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - docurgent_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docurgent_backend
+    environment:
+      # Database
+      DATABASE_URL: postgresql://docurgent:docurgent123@postgres:5432/docurgent
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: docurgent
+      POSTGRES_PASSWORD: docurgent123
+      POSTGRES_DB: docurgent
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # MinIO
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      # JWT
+      SECRET_KEY: your-secret-key-change-this-in-production-min-32-chars-long
+      # CORS
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+      # SMTP (dummy values)
+      SMTP_HOST: smtp.gmail.com
+      SMTP_USER: dummy@example.com
+      SMTP_PASSWORD: dummy_password
+      SMTP_FROM: noreply@docurgent.com
+      # Twilio (dummy values)
+      TWILIO_ACCOUNT_SID: dummy_sid
+      TWILIO_AUTH_TOKEN: dummy_token
+      TWILIO_PHONE_NUMBER: 1234567890
+      # Stripe (dummy values)
+      STRIPE_SECRET_KEY: sk_test_dummy
+      STRIPE_PUBLIC_KEY: pk_test_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_dummy
+      # App settings
+      DEBUG: "True"
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    networks:
+      - docurgent_network
+
+  # NGINX Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: docurgent_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - docurgent_network
+
+  # Celery Worker (optional)
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    container_name: docurgent_celery
+    environment:
+      DATABASE_URL: postgresql://docurgent:docurgent123@postgres:5432/docurgent
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - docurgent_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+
+networks:
+  docurgent_network:
+    driver: bridge

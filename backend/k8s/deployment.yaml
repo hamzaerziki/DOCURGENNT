@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docurgent-backend
+  namespace: docurgent
+  labels:
+    app: docurgent-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: docurgent-backend
+  template:
+    metadata:
+      labels:
+        app: docurgent-backend
+    spec:
+      containers:
+      - name: backend
+        image: your-registry.com/docurgent-backend:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: docurgent-secrets
+              key: database-url
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: docurgent-secrets
+              key: jwt-secret
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: docurgent-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: docurgent-config
+              key: redis-port
+        - name: MINIO_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: docurgent-config
+              key: minio-endpoint
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: docurgent-secrets
+              key: minio-access-key
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: docurgent-secrets
+              key: minio-secret-key
+        - name: SMTP_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: docurgent-config
+              key: smtp-host
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: docurgent-secrets
+              key: smtp-user
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: docurgent-secrets
+              key: smtp-password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always

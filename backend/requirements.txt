@@ -1,0 +1,94 @@
+# ============================================================================
+# DocUrgent Backend - Python Dependencies
+# ============================================================================
+# This file contains all required Python packages for the DocUrgent platform
+# Install with: pip install -r requirements.txt
+# ============================================================================
+
+# ============================================================================
+# Core Framework
+# ============================================================================
+fastapi==0.109.0              # High-performance async web framework
+uvicorn[standard]==0.27.0     # ASGI server with WebSocket support
+gunicorn==21.2.0              # Production WSGI server
+python-multipart==0.0.6       # Form data parsing
+
+# ============================================================================
+# Database & ORM
+# ============================================================================
+sqlalchemy==2.0.25            # SQL toolkit and ORM
+alembic==1.13.1               # Database migration tool
+psycopg2-binary==2.9.9        # PostgreSQL adapter
+
+# ============================================================================
+# Authentication & Security
+# ============================================================================
+python-jose[cryptography]==3.3.0  # JWT token handling
+passlib[bcrypt]==1.7.4            # Password hashing
+pyjwt==2.8.0                      # JWT encoding/decoding
+python-dotenv==1.0.0              # Environment variable management
+
+# ============================================================================
+# Data Validation
+# ============================================================================
+pydantic==2.5.3               # Data validation using Python type hints
+pydantic-settings==2.1.0      # Settings management
+email-validator==2.1.0        # Email validation
+
+# ============================================================================
+# Caching & Background Tasks
+# ============================================================================
+redis==5.0.1                  # Redis client
+hiredis==2.3.2                # High-performance Redis protocol parser
+celery==5.3.4                 # Distributed task queue
+flower==2.0.1                 # Celery monitoring tool
+
+# ============================================================================
+# Object Storage
+# ============================================================================
+minio==7.2.3                  # S3-compatible object storage client
+
+# ============================================================================
+# Communication Services
+# ============================================================================
+aiosmtplib==3.0.1             # Async SMTP client for emails
+twilio==8.11.0                # SMS and phone verification
+
+# ============================================================================
+# Payment Processing
+# ============================================================================
+stripe==7.8.0                 # Payment gateway integration
+
+# ============================================================================
+# QR Code & Image Processing
+# ============================================================================
+qrcode[pil]==7.4.2            # QR code generation
+pillow==10.1.0                # Image processing library
+
+# ============================================================================
+# Real-time Communication
+# ============================================================================
+websockets==12.0              # WebSocket support
+python-socketio==5.10.0       # Socket.IO server
+
+# ============================================================================
+# Utilities
+# ============================================================================
+python-dateutil==2.8.2        # Date/time utilities
+pytz==2023.3                  # Timezone support
+requests==2.31.0              # HTTP library
+
+# ============================================================================
+# Testing
+# ============================================================================
+pytest==7.4.4                 # Testing framework
+pytest-asyncio==0.23.3        # Async test support
+pytest-cov==4.1.0             # Code coverage
+httpx==0.26.0                 # Async HTTP client for testing
+
+# ============================================================================
+# Development Tools
+# ============================================================================
+black==23.12.1                # Code formatter
+flake8==7.0.0                 # Linting tool
+mypy==1.8.0                   # Static type checker
